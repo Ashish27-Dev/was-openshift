@@ -1,0 +1,21 @@
+<server description="Default Server">
+
+    <!-- Enable necessary features -->
+    <featureManager>
+        <feature>servlet-4.0</feature>
+        <feature>jsp-2.3</feature>
+        <feature>cdi-2.0</feature>
+        <feature>jdbc-4.2</feature>
+        <!-- Add other features as required by your application -->
+    </featureManager>
+
+    <!-- Application configuration -->
+    <webApplication id="sample-app" location="sample-app.war" contextRoot="/"/>
+
+    <!-- HTTP Endpoint -->
+    <httpEndpoint host="*" httpPort="9080" httpsPort="9443"/>
+
+    <!-- Optional: Enable application auto expand -->
+    <applicationManager autoExpand="true"/>
+
+</server>

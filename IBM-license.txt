@@ -1,0 +1,174 @@
+If you need to install IBM License Manager on OpenShift without using an Operator, you'll need to manually deploy the License Manager using standard Kubernetes and OpenShift methods. Here’s a step-by-step guide to doing that:
+
+### 1. **Prepare the Environment**
+
+Ensure that you have access to the IBM License Manager Docker image and your OpenShift CLI (`oc`) is configured.
+
+### 2. **Create a Namespace**
+
+Create a namespace (project) in OpenShift where the IBM License Manager will be deployed.
+
+```sh
+oc create namespace ibm-license-manager
+```
+
+### 3. **Create Persistent Storage**
+
+IBM License Manager typically requires persistent storage for its data. You need to create a Persistent Volume (PV) and Persistent Volume Claim (PVC).
+
+#### **Persistent Volume YAML (`pv.yaml`)**:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: license-manager-pv
+  namespace: ibm-license-manager
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data  # Adjust path according to your storage setup
+```
+
+#### **Persistent Volume Claim YAML (`pvc.yaml`)**:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: license-manager-pvc
+  namespace: ibm-license-manager
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+```
+
+Apply these configurations:
+
+```sh
+oc apply -f pv.yaml
+oc apply -f pvc.yaml
+```
+
+### 4. **Create a Deployment**
+
+Create a deployment YAML file to deploy the IBM License Manager container.
+
+#### **Deployment YAML (`deployment.yaml`)**:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: license-manager
+  namespace: ibm-license-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: license-manager
+  template:
+    metadata:
+      labels:
+        app: license-manager
+    spec:
+      containers:
+        - name: license-manager
+          image: <ibm-license-manager-image>
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: license-manager-storage
+              mountPath: /data
+      volumes:
+        - name: license-manager-storage
+          persistentVolumeClaim:
+            claimName: license-manager-pvc
+```
+
+Replace `<ibm-license-manager-image>` with the actual image URL for IBM License Manager.
+
+Apply the deployment:
+
+```sh
+oc apply -f deployment.yaml
+```
+
+### 5. **Create a Service**
+
+Define a service to expose the IBM License Manager within the cluster.
+
+#### **Service YAML (`service.yaml`)**:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: license-manager-service
+  namespace: ibm-license-manager
+spec:
+  selector:
+    app: license-manager
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+```
+
+Apply the service:
+
+```sh
+oc apply -f service.yaml
+```
+
+### 6. **Create an OpenShift Route**
+
+Expose the IBM License Manager externally using an OpenShift Route.
+
+#### **Route YAML (`route.yaml`)**:
+
+```yaml
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: license-manager-route
+  namespace: ibm-license-manager
+spec:
+  to:
+    kind: Service
+    name: license-manager-service
+  port:
+    targetPort: 80
+  tls:
+    termination: edge  # Adjust according to your security needs
+```
+
+Apply the route:
+
+```sh
+oc apply -f route.yaml
+```
+
+### 7. **Access the IBM License Manager**
+
+Once everything is deployed, you can access the IBM License Manager using the route URL. You can find the URL by running:
+
+```sh
+oc get route -n ibm-license-manager
+```
+
+### Summary
+
+1. **Create a Namespace**: `oc create namespace ibm-license-manager`
+2. **Set Up Persistent Storage**: Create and apply PV and PVC YAML files.
+3. **Deploy the Application**: Create and apply the Deployment YAML file.
+4. **Expose the Service**: Create and apply the Service YAML file.
+5. **Create a Route**: Create and apply the Route YAML file to expose the application externally.
+
+These steps outline how to manually deploy IBM License Manager on OpenShift without using an Operator. Make sure to consult IBM’s official documentation for any specific configurations or additional requirements.

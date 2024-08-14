@@ -1,0 +1,46 @@
+Use a text editor to open it:
+
+bash
+Copy code
+vi /opt/ibm/wlp/usr/servers/<server_name>/config/server.xml
+Add <classloader> Section:
+
+Insert the <classloader> section into the server.xml file, inside the <server> element but outside of other nested elements. For example:
+
+xml
+Copy code
+<server>
+  <!-- Other configurations -->
+  
+  <classloader>
+    <classpath>
+      <path name="lib/custom-library.jar"/>
+      <path name="lib/another-library.jar"/>
+    </classpath>
+  </classloader>
+  
+  <!-- Other configurations -->
+</server>
+Ensure that the paths you specify are correct relative to the server’s classpath or the dropins directory.
+
+Save and Close:
+
+Save the file and close the editor.
+
+Restart the Server:
+
+Restart WebSphere Liberty for changes to take effect:
+
+bash
+Copy code
+/opt/ibm/wlp/bin/server stop <server_name>
+/opt/ibm/wlp/bin/server start <server_name>
+3. Alternative Classpath Management
+If you don't want to modify server.xml, consider these alternatives:
+
+Place JARs in dropins: Place your JAR files in the dropins directory. WebSphere Liberty automatically detects and includes libraries placed here. The directory path is typically:
+
+bash
+Copy code
+/opt/ibm/wlp/usr/servers/<server_name>/dropins/
+Application-Specific Classpath: Ensure that your application’s WEB-INF/lib directory contains the required JAR files. These JARs will be included in the application's classpath.
